@@ -29,7 +29,8 @@
 				"ms-toolsai.jupyter-renderers",
 				"yzhang.markdown-all-in-one",
 				"VisualStudioExptTeam.vscodeintellicode",
-				"VisualStudioExptTeam.vscodeintellicode-completions"
+				"VisualStudioExptTeam.vscodeintellicode-completions",
+				"ms-vsliveshare.vsliveshare"
 			]
 		}
 	},
