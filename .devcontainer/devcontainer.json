@@ -3,10 +3,11 @@
 {
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"build": {
-		"context": ".",
-		"dockerfile": "Dockerfile"
-	},
+	// "build": {
+	// 	"context": ".",
+	// 	"dockerfile": "Dockerfile"
+	// },
+	"image": "parkeraddison/policyrecon-devcontainer",
 	// "runArgs": [
 	// 	"--network=host"
 	// ],
