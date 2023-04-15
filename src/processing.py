@@ -53,8 +53,7 @@ def clean_and_combine_pages(text_by_page: List[str]) -> str:
 def convert_frame_to_haystack(
         df: DataFrame,
         content_col: str = 'fulltext',
-        meta_cols: List[str] = ('corpus', 'title', 'file_name', 'url'),
-        id_col: str = 'id',
+        meta_cols: List[str] = ('corpus', 'title', 'file_name', 'url', 'id'),
 ) -> List[Document]:
     """
     Convert a dataframe of text documents and metadata into Haystack Document
@@ -63,11 +62,10 @@ def convert_frame_to_haystack(
 
     content = df[content_col].to_list()
     meta = df[list(meta_cols)].to_dict(orient='records')
-    ids = df[id_col].to_list()
 
     docs = []
     for i in range(df.shape[0]):
-        new_doc = Document(content=content[i], meta=meta[i], id=ids[i])
+        new_doc = Document(content=content[i], meta=meta[i])
         docs.append(new_doc)
 
     return docs
@@ -99,7 +97,7 @@ def clean_sentence_splits(
 
 
 # -------------------------------- SIMILARITY -------------------------------- #
-def get_chunk_embeddings(
+def compute_chunk_embeddings(
         chunks: List[Document],
         model_name: str,
         **kwargs,
@@ -115,7 +113,7 @@ def get_chunk_embeddings(
     return embeddings
 
 
-def get_chunk_similarity_scores(
+def compute_chunk_similarity(
         chunks: List[Document],
 ) -> np.ndarray:
     """
@@ -126,9 +124,9 @@ def get_chunk_similarity_scores(
     return scores
 
 
-def get_top_k_similar_chunk_pair_indices(
+def get_top_n_similar_chunk_pair_indices(
         scores: np.ndarray,
-        k: int,
+        n: int,
 ) -> List[List[int]]:
     """
     Returns indices for the highest k values in a similarity matrix between
@@ -137,7 +135,7 @@ def get_top_k_similar_chunk_pair_indices(
     # Partitioning guarantees that the first k values are the smallest k values
     # in the array (or, in our case that the *last* k values are the *largest*).
     # Using argpartition we get the indices, then we just take the last k.
-    top_k_indices = np.argpartition(scores, -k, axis=None)[-k:]
+    top_k_indices = np.argpartition(scores, -n, axis=None)[-n:]
     # Since the resulting indices are flattened, we need to put it back into
     # row,col form.
     row_indices, col_indices = np.unravel_index(top_k_indices, scores.shape)
@@ -149,6 +147,7 @@ def split_chunks_to_sentences(
         chunks: List[Document],
         split_cleaner: Optional[Callable[[List[str]], List[str]]] = None,
 ) -> List[List[str]]:
+    # Potential improvement: replace with SpaCy 'senter' from en_web_core_sm
     nlp = English()
     nlp.add_pipe('sentencizer')
     nlp.select_pipes(enable=['sentencizer'])
