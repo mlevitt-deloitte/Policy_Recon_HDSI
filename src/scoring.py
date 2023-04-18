@@ -3,9 +3,8 @@ Methods for selecting potentially contradictive sentence candidates.
 """
 
 import itertools
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
-import numpy as np
 import pandas as pd
 from pandas import DataFrame, Series
 import torch
@@ -27,44 +26,37 @@ def load_contradiction_model(
     return tokenizer, model
 
 
-# TODO: FIXME: This should be optimized so that we can create sentence
-# embeddings once, then pass these embeddings to the model for contradiction
-# scoring. We shouldn't compute the tokenization for the same sentence multiple
-# times.
+# NOTE: Although it may appear that this function is non-efficient due to it
+# performing `encode_plus` multiple times for the same sentence, the call is
+# extremely fast and does not pose a runtime issue because it is just a token
+# lookup! Rather, the sequence classification inference takes the most time.
 def _evaluate_contradictions(
-        premise,
-        hypothesis,
-        tokenizer,
-        model,
-) -> List[float]:
+        premise: str,
+        hypothesis: str,
+        tokenizer: PreTrainedTokenizer,
+        model: PreTrainedModel,
+) -> List[float, float, float]:
     """
-    From https://github.com/facebookresearch/anli/blob/main/src/hg_api/interactive.py
+    Given a pair of sentences, return the probabilities that the second sentence
+    is an entailment (agree), neutral, or a contradiction to the first.
+
+    See:
+    https://github.com/facebookresearch/anli/blob/main/src/hg_api/interactive.py
     """
     max_length = 256
-
     tokenized_input_seq_pair = tokenizer.encode_plus(premise, hypothesis,
                                                      max_length=max_length,
-                                                     return_token_type_ids=True, truncation=True)
-
+                                                     return_token_type_ids=True,
+                                                     truncation=True)
     input_ids = torch.Tensor(tokenized_input_seq_pair['input_ids']).long().unsqueeze(0)
-    # remember bart doesn't have 'token_type_ids', remove the line below if you are using bart.
     token_type_ids = torch.Tensor(tokenized_input_seq_pair['token_type_ids']).long().unsqueeze(0)
     attention_mask = torch.Tensor(tokenized_input_seq_pair['attention_mask']).long().unsqueeze(0)
-
     outputs = model(input_ids,
                     attention_mask=attention_mask,
                     token_type_ids=token_type_ids,
                     labels=None)
-
     predicted_probability = torch.softmax(outputs[0], dim=1)[0].tolist()  # batch_size only one
-
-    # Note:
-    # "id2label": {
-    #     "0": "entailment",
-    #     "1": "neutral",
-    #     "2": "contradiction"
-    # },
-    return predicted_probability
+    return predicted_probability  # (entailment, neutral, contradiction)
 
 
 def compute_sentence_contradiction_scores(
@@ -83,7 +75,7 @@ def compute_sentence_contradiction_scores(
                'entailment', 'neutral', 'contradiction']
     contradiction_scores = pd.DataFrame(columns=columns)
 
-    for chunk_id_A, chunk_id_B in tqdm(chunk_id_pairs[:5]):
+    for chunk_id_A, chunk_id_B in tqdm(chunk_id_pairs):
         sentences_chunk_A = chunks[chunk_id_A].sentences
         sentences_chunk_B = chunks[chunk_id_B].sentences
         sentence_combination_indices = list(
@@ -136,7 +128,6 @@ def retrieve_candidate_info(
     The resulting frame contains all information needed for a human to verify
     the candidates.
     """
-
     chunk_A_infos = (
         pd.json_normalize([{
             'id': cid,
@@ -174,4 +165,10 @@ def retrieve_candidate_info(
 
 
 def pretty_print_candidate(candidate: Series):
-    raise NotImplementedError
+    print(f"Title:\t{candidate['chunk_A.meta.title']}")
+    print( "-----")
+    print(candidate['sentence_A'])
+    print()
+    print(f"Title:\t{candidate['chunk_B.meta.title']}")
+    print( "-----")
+    print(candidate['sentence_B'])

@@ -44,16 +44,19 @@ if __name__ == "__main__":
     # if there are that many sentences remaining in the document. The next chunk
     # will include the last K sentences of the previous chunk if a previous
     # chunk exists. Chunks will not span documents.
-    CHUNK_SENTENCE_CLEANING_FUNC1 = partial(processing.clean_sentence_splits,
-        toc_period_threshold = 5,
-        length_minimum = 0,
-        length_maximum = 1000,
+    CHUNK_CLEANING_TOC_PERIOD_THRESHOLD = 5
+    CHUNK_CLEANING_LENGTH_MINIMUM = 0
+    CHUNK_CLEANING_LENGTH_MAXIMUM = 1000
+    chunk_sentence_cleaning_func = partial(processing.clean_sentence_splits,
+        toc_period_threshold = CHUNK_CLEANING_TOC_PERIOD_THRESHOLD,
+        length_minimum = CHUNK_CLEANING_LENGTH_MINIMUM,
+        length_maximum = CHUNK_CLEANING_LENGTH_MAXIMUM,
     )
     CHUNK_LENGTH = 8
     CHUNK_OVERLAP = 4
     chunker = custom_preprocessors.SplitCleanerPreProcessor(
         split_by="sentence",
-        split_cleaner=CHUNK_SENTENCE_CLEANING_FUNC1,
+        split_cleaner=chunk_sentence_cleaning_func,
         split_length=CHUNK_LENGTH,
         split_overlap=CHUNK_OVERLAP,
         split_respect_sentence_boundary=False, # incompatible with 'passage' or 'sentence'
@@ -61,13 +64,7 @@ if __name__ == "__main__":
 
     doc_chunks = chunker.process(docs)
 
-    # ///-- ADDITIONAL CLEANING (SHOULD BE POTENTIALLY MOVED TO MODULES) --\\\ #
-    # Get rid of chunks that have the same content (and therefore the same hash
-    # id)
-    from collections import Counter
-    doc_chunk_id_counts = Counter([c.id for c in doc_chunks])
-    doc_chunks = [c for c in doc_chunks if doc_chunk_id_counts[c.id] == 1]
-    # \\\------------------------------------------------------------------/// #
+    doc_chunks = processing.remove_identical_chunks(doc_chunks)
 
     # -------------------- CHUNK SIMILARITY (PRESELECTION) ------------------- #
     MODEL_NAME = 'all-MiniLM-L6-v2'
@@ -86,24 +83,15 @@ if __name__ == "__main__":
     # TODO: Save intermediate similarity scores between chunks? (only makes
     #       sense if we also save the chunks themselves)
 
-    # ///-- ADDITIONAL CLEANING (SHOULD BE POTENTIALLY MOVED TO MODULES) --\\\ #
-    # Get rid of chunks that have similarity scores that are too high
-    # This value was fine-tuned by trial and error to remove similar chunks that
-    # were just common header/disclaimer text.
-    MAX_CHUNK_SIMILARITY_SCORE = 0.87
-
-    similarity_matrix = np.where(
-        similarity_matrix < MAX_CHUNK_SIMILARITY_SCORE,
-        similarity_matrix, 0
-    )
-    # Get rid of adjacent chunks
-    similarity_matrix = np.triu(similarity_matrix, 2)
-    # \\\------------------------------------------------------------------/// #
-
-    CHUNK_SIMILARITY_TOP_N = 10  # Should be much much larger!
+    # Get rid of chunks that have similarity scores that are too high. This
+    # value was fine-tuned by trial and error to remove similar chunks that were
+    # just common header/disclaimer text.
+    MAX_CHUNK_SIMILARITY_THRESHOLD = 0.87
+    CHUNK_SIMILARITY_TOP_N = 500
     top_n_pair_indices = processing.get_top_n_similar_chunk_pair_indices(
         scores=similarity_matrix,
         n=CHUNK_SIMILARITY_TOP_N,
+        max_similarity_threshold=MAX_CHUNK_SIMILARITY_THRESHOLD,
     )
     similar_chunk_id_pairs = [
         (doc_chunks[c1].id, doc_chunks[c2].id) for c1, c2 in top_n_pair_indices
@@ -118,18 +106,20 @@ if __name__ == "__main__":
         for i in desired_indices
     }
 
-    CHUNK_SENTENCE_CLEANING_FUNC2 = partial(processing.clean_sentence_splits,
-        toc_period_threshold = 5,
-        length_minimum = 20,
-        length_maximum = 1000,  # FIXME: Should support None as default arg
+    SENTENCE_CLEANING_LENGTH_MINIMUM = 40
+    sentence_cleaning_func = partial(processing.clean_sentence_splits,
+        length_minimum = SENTENCE_CLEANING_LENGTH_MINIMUM,
     )
     desired_chunk_sentences = processing.split_chunks_to_sentences(
         chunks=desired_chunks.values(),
-        split_cleaner=CHUNK_SENTENCE_CLEANING_FUNC2,
+        split_cleaner=sentence_cleaning_func,
     )
     # Enrich our desired chunks with sentences
     for chunk, sentences in zip(desired_chunks.values(), desired_chunk_sentences):
         chunk.sentences = sentences
+
+    SAVED_CHUNKS_FILEPATH = 'desired-chunks.pkl'
+    data.save_chunks_pickle(desired_chunks, SAVED_CHUNKS_FILEPATH)
 
     # ------------------------- CONTRADICTION SCORING ------------------------ #
     tokenizer, contradiction_model = scoring.load_contradiction_model()
@@ -137,7 +127,7 @@ if __name__ == "__main__":
         chunks=desired_chunks,
         chunk_id_pairs=similar_chunk_id_pairs,
     )
-    CANDIDATE_SELECTION_TOP_K = 10
+    CANDIDATE_SELECTION_TOP_K = 100
     candidates = scoring.get_top_k_contradictive_candidates(
         contradiction_scores=contradiction_scores,
         k=CANDIDATE_SELECTION_TOP_K,
@@ -146,3 +136,6 @@ if __name__ == "__main__":
         candidates=candidates,
         chunks=desired_chunks
     )
+
+    SAVED_CANDIDATES_FILEPATH = 'candidates.csv'
+    data.save_candidates_csv(candidate_info, SAVED_CANDIDATES_FILEPATH)

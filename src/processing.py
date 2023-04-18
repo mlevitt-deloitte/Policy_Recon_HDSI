@@ -3,11 +3,10 @@ Methods for cleaning and preprocessing documents, including computation of
 similarity between chunks and saving of intermediate results.
 """
 
-from typing import (Callable, Dict, Generator, List, Literal, Optional, Set,
-                    Tuple, Union)
+from collections import Counter
+from typing import Callable, List, Optional
 
 import numpy as np
-import pandas as pd
 from haystack.schema import Document
 from pandas import DataFrame
 from sentence_transformers import SentenceTransformer
@@ -20,7 +19,7 @@ def clean_pagetext(pagetext: str) -> str:
     """
     Takes text for a single page of a document and returns cleaned text.
     """
-    # NOTE: This is currently not implemented.
+    # Placeholder for additional cleaning, if desired.
     return pagetext
 
 
@@ -28,7 +27,7 @@ def clean_fulltext(fulltext: str) -> str:
     """
     Takes text for a full document and returns cleaned text.
     """
-    # NOTE: This is currently not implemented.
+    # Placeholder for additional cleaning, if desired.
     return fulltext
 
 
@@ -73,24 +72,26 @@ def convert_frame_to_haystack(
 
 def clean_sentence_splits(
         sentences: List[str],
-        toc_period_threshold: int = 5,
-        length_minimum: int = 0,
-        length_maximum: int = 1000,
+        toc_period_threshold: Optional[int] = 5,
+        length_minimum: Optional[int] = None,
+        length_maximum: Optional[int] = None,
 ) -> List[str]:
     """
     Take a list of sentences and remove ones which are potentially part of a
     table of contents or are suspiciously long (may be part of a data table).
     """
+    if toc_period_threshold is not None:
+        toc_periods = '.' * toc_period_threshold
     cleaned_sentences = [
         s for s in sentences if (
             # Remove table of contents
-            ('.' * toc_period_threshold not in s)
+            (toc_period_threshold is None or toc_periods not in s)
             # Remove too short sentences
             and
-            (len(s) > length_minimum)
+            (length_minimum is None or len(s) > length_minimum)
             # Remove overly long sentences
             and
-            (len(s) < length_maximum)
+            (length_maximum is None or len(s) < length_maximum)
         )
     ]
     return cleaned_sentences
@@ -107,8 +108,8 @@ def compute_chunk_embeddings(
     using the sentence-transformers model specified by `model_name`.
     """
     model = SentenceTransformer(model_name)
-    # NOTE: May run into issues with performing this computation all-at-once
-    # when working with much larger datasets. Consider batching.
+    # The encode method performs batching automatically when the provided input
+    # is large, or batching can be specified with kwargs.
     embeddings = model.encode([chunk.content for chunk in chunks], **kwargs)
     return embeddings
 
@@ -127,11 +128,25 @@ def compute_chunk_similarity(
 def get_top_n_similar_chunk_pair_indices(
         scores: np.ndarray,
         n: int,
+        max_similarity_threshold: Optional[float] = None,
+        ignore_adjacent: bool = False,
 ) -> List[List[int]]:
     """
     Returns indices for the highest k values in a similarity matrix between
-    chunk pairs.
+    chunk pairs. Optionally ignore scores higher than a specified similarity
+    threshold and ignore similarities between adjacent items in the similarity
+    matrix.
     """
+    if max_similarity_threshold is not None:
+        scores = np.where(
+            scores < max_similarity_threshold,
+            scores, 0
+        )
+    # Note that this approach is a quick hack. It will also remove chunks that
+    # are 'adjacent' between documents -- such as the last chunk in document A
+    # and the first chunk in document B. This might not be desired!
+    if ignore_adjacent:
+        scores = np.triu(scores, 2)
     # Partitioning guarantees that the first k values are the smallest k values
     # in the array (or, in our case that the *last* k values are the *largest*).
     # Using argpartition we get the indices, then we just take the last k.
@@ -143,10 +158,25 @@ def get_top_n_similar_chunk_pair_indices(
     return top_k_pair_indices
 
 
+def remove_identical_chunks(
+        chunks: List[Document],
+) -> List[Document]:
+    """
+    Remove chunks that have the same content (and therefore the same hash id).
+    """
+    chunk_id_counts = Counter([c.id for c in chunks])
+    cleaned_chunks = [c for c in chunks if chunk_id_counts[c.id] == 1]
+    return cleaned_chunks
+
+
 def split_chunks_to_sentences(
         chunks: List[Document],
         split_cleaner: Optional[Callable[[List[str]], List[str]]] = None,
 ) -> List[List[str]]:
+    """
+    Split input text into a list of sentences, with an optional cleaning
+    function applied to the resulting sentences.
+    """
     # Potential improvement: replace with SpaCy 'senter' from en_web_core_sm
     nlp = English()
     nlp.add_pipe('sentencizer')
