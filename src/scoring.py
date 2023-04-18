@@ -70,6 +70,8 @@ def _evaluate_contradictions(
 def compute_sentence_contradiction_scores(
         chunks: Dict[str, Document],
         chunk_id_pairs: List[Tuple[str, str]],
+        tokenizer: PreTrainedTokenizer,
+        model: PreTrainedModel,
 ) -> DataFrame:
     """
     Given a collection of chunks with a .sentences property, and the IDs of
@@ -93,7 +95,8 @@ def compute_sentence_contradiction_scores(
         outputs = []
         for idx_A, idx_B in sentence_combination_indices:
             probs = _evaluate_contradictions(
-                sentences_chunk_A[idx_A], sentences_chunk_B[idx_B]
+                sentences_chunk_A[idx_A], sentences_chunk_B[idx_B],
+                tokenizer=tokenizer, model=model,
             )
             outputs.append([chunk_id_A, chunk_id_B, idx_A, idx_B, *probs])
 
@@ -163,7 +166,7 @@ def retrieve_candidate_info(
         [
             chunk_A_infos, sentence_A_texts,
             chunk_B_infos, sentence_B_texts,
-            candidates[['entailment', 'neutral', 'contradiction']]
+            candidates[['entailment', 'neutral', 'contradiction']].reset_index(drop=True)
         ],
         axis=1,
     )
