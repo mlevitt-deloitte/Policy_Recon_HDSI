@@ -78,7 +78,7 @@ Under `src/` you can find all of the components used to build the contradiction 
 Because of the modular nature of our pipeline, you may modify, extend, remove, borrow, or replace the various components to best fit your use-case and dataset.
 
 ### Results
-You may find results of the contradiction detection pipeline being ran on the full DoD Issuances dataset by inspecting [`DoD Contradictions.ipynb` [nbviewer ↗]](https://nbviewer.org/github/mlevitt-deloitte/Policy_Recon_HDSI/blob/main/DoD%20Contradictions.ipynb). Outputs of the cells, including runtimes for long processes, are included in the notebook. (It is recommended you use the nbviewer link above to preserve output formatting online.)
+You may find results of the contradiction detection pipeline being ran on the full DoD Issuances dataset by inspecting [`DoD Contradictions.ipynb (nbviewer)`](https://nbviewer.org/github/mlevitt-deloitte/Policy_Recon_HDSI/blob/main/DoD%20Contradictions.ipynb). Outputs of the cells, including runtimes for long processes, are included in the notebook. (It is recommended you use the nbviewer link above to preserve output formatting online.)
 
 ## Developing
 To develop with this solution, we recommend utilizing [Development Containers](https://containers.dev/) for consistency between developer systems and fast dependency installation. We define our dev container under `.devcontainer/`.
@@ -137,4 +137,4 @@ As part of our solution, we relied on the following helpful tools/models that we
 ### Acknowledgements
 * This interesting project idea was originally created as a submission to Deloitte's **US GPS PolicyRecon™ NLP Hackathon**!
 * We utilized the generous support of the Deloitte **Data Science Lab** team who provided us with a Databricks compute environment to run our pipeline. Thank you!
-* Code for this project is hosted on GitHub at https://github.com/mlevitt-deloitte/Policy_Recon_HDSI/tree/main
+* The code for this project was originally hosted on GitHub at https://github.com/mlevitt-deloitte/Policy_Recon_HDSI/tree/main
