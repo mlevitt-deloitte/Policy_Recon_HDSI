@@ -12,6 +12,7 @@ This repo explores the ability to detect contradictions in government policy doc
 - [Detecting Contradictions](#detecting-contradictions)
    - [Run the full pipeline](#run-the-full-pipeline)
    - [Re-use or extend parts of the pipeline](#re-use-or-extend-parts-of-the-pipeline)
+   - [Results](#results)
 - [Developing](#developing)
    - [Use a local container image](#use-a-local-container-image)
    - [Install additional pip packages](#install-additional-pip-packages)
@@ -71,6 +72,9 @@ To run the full pipeline, you can execute `pipeline.py` as a script:
 Under `src/` you can find all of the components used to build the contradiction discovery pipeline. Each module is well-documented regarding its contents and logic.
 
 Because of the modular nature of our pipeline, you may modify, extend, remove, borrow, or replace the various components to best fit your use-case and dataset.
+
+### Results
+You may find results of the contradiction detection pipeline being ran on the full DoD Issuances dataset by inspecting [`DoD Contradictions.ipynb`](./DoD%20Contradictions.ipynb). Outputs of the cells, including runtimes for long processes, are included in the notebook.
 
 ## Developing
 To develop with this solution, we recommend utilizing [Development Containers](https://containers.dev/) for consistency between developer systems and fast dependency installation. We define our dev container under `.devcontainer/`.

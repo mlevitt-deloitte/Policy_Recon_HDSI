@@ -71,7 +71,6 @@ def preselect_similar_chunks(doc_chunks: List[Document]) -> Tuple[Dict[str, Docu
 
     print(" | [+] Selecting similar chunks")
     similarity_matrix = processing.compute_chunk_similarity(doc_chunks)
-    chunk_ids = [chunk.id for chunk in doc_chunks]
     # TODO: Save intermediate similarity scores between chunks? (only makes
     #       sense if we also save the chunks themselves)
 
