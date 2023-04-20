@@ -3,7 +3,7 @@ Methods for selecting potentially contradictive sentence candidates.
 """
 
 import itertools
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from pandas import DataFrame, Series
@@ -35,7 +35,7 @@ def _evaluate_contradictions(
         hypothesis: str,
         tokenizer: PreTrainedTokenizer,
         model: PreTrainedModel,
-) -> List[float, float, float]:
+) -> List[float]:
     """
     Given a pair of sentences, return the probabilities that the second sentence
     is an entailment (agree), neutral, or a contradiction to the first.
@@ -102,12 +102,15 @@ def compute_sentence_contradiction_scores(
 
 def get_top_k_contradictive_candidates(
         contradiction_scores: DataFrame,
-        k: int,
+        k: Optional[int] = None,
 ) -> DataFrame:
     """
     Return the top k rows from the contradiction scores table which are
-    considered the most contradictive, sorted with greatest first.
+    considered the most contradictive, sorted with greatest first. If k is None,
+    return all rows in sorted order.
     """
+    if k is None:
+        k = len(contradiction_scores)
     # The heuristic is currently to just select the 'contradiction' output
     # column.
     top_k_rows = (

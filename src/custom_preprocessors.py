@@ -23,7 +23,6 @@ class SplitCleanerPreProcessor(PreProcessor):
         documents of split_length.
         """
         super().__init__(*args, **kwargs)
-
         self.split_cleaner = split_cleaner
 
     def _split_into_units(self, text: str, split_by: str) -> Tuple[List[str], str]:
@@ -50,12 +49,15 @@ class NestedPreProcessor(PreProcessor):
         *args,
         **kwargs,
     ):
+        """
+        Override to PreProcessor which returns processed docs as a list of lists
+        of documents rather than flattening.
+        """
         super().__init__(*args, **kwargs)
 
-    # Override -- return nested_docs directly rather than flattening
     def _process_batch(
         self, documents: List[Union[dict, Document]], id_hash_keys: Optional[List[str]] = None, **kwargs
-    ) -> List[Document]:
+    ) -> List[List[Document]]:
         nested_docs = [
             self._process_single(d, id_hash_keys=id_hash_keys, **kwargs)
             for d in tqdm(documents, disable=not self.progress_bar, desc="Preprocessing", unit="docs")
