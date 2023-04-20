@@ -4,6 +4,9 @@ data/
 # Results
 output/
 
+# Pipeline container cache
+.docker-cache
+
 # Jupyter
 .ipynb_checkpoints
 */.ipynb_checkpoints/*

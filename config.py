@@ -1,5 +1,5 @@
 # Which dataset to load.
-DATASET_FILEPATH = "./data/02. Data Sets/DoD Issuances/contradictions_datasets_dod_issuances.zip"
+DATASET_FILEPATH = "./data/DoD Issuances/contradictions_datasets_dod_issuances.zip"
 # How many documents to include in the pipeline run.
 SUBSET_SIZE = 10                # DEMO VALUE ::: Recommend `None` for full pipeline.
 # Parameters for cleaning sentences in initial chunking

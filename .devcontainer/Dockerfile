@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/devcontainers/python:0-3.10
 
-COPY caadmin.netskope.com.cer /tmp/certs/caadmin.netskope.com.cer
+COPY .devcontainer/caadmin.netskope.com.cer /tmp/certs/caadmin.netskope.com.cer
 RUN openssl x509 -inform DER -in /tmp/certs/caadmin.netskope.com.cer >> /etc/ssl/certs/ca-certificates.crt
 ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 

@@ -33,6 +33,7 @@ def load_dataset_from_pyspark(table_name: str) -> pd.DataFrame:
 def save_chunks_pickle(
     chunks: Dict[str, Document], filepath: Path, overwrite: bool = False
 ) -> None:
+    Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     if not overwrite and Path(filepath).exists():
         rand_id = _get_random_id()
         old = Path(filepath)
@@ -51,6 +52,7 @@ def load_chunks_pickle(filepath: Path) -> Dict[str, Document]:
 def save_candidates_csv(
     candidates: DataFrame, filepath: Path, overwrite: bool = False
 ) -> None:
+    Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     if not overwrite and Path(filepath).exists():
         rand_id = _get_random_id()
         old = Path(filepath)

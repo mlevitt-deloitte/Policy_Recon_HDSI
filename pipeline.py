@@ -39,7 +39,8 @@ def preprocess_documents(df: DataFrame) -> List[Document]:
         length_maximum = CHUNK_CLEANING_LENGTH_MAXIMUM,
     )
     chunker = custom_preprocessors.SplitCleanerPreProcessor(
-        split_by="sentence",
+        language='en',
+        split_by='sentence',
         split_cleaner=chunk_sentence_cleaning_func,
         split_length=CHUNK_LENGTH,
         split_overlap=CHUNK_OVERLAP,
@@ -146,7 +147,7 @@ if __name__ == "__main__":
     print(f".... Saving candidates to {SAVED_CANDIDATES_FILEPATH}")
     loading.save_candidates_csv(candidates, SAVED_CANDIDATES_FILEPATH)
 
-    print(f"Example of candidates:")
+    print(f"\n\n\n\nExample of candidates:")
     for idx, candidate in candidates.iloc[:10].iterrows():
         print(f"({idx})")
         scoring.pretty_print_candidate(candidate)
