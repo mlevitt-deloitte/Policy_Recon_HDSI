@@ -137,3 +137,4 @@ As part of our solution, we relied on the following helpful tools/models that we
 ### Acknowledgements
 * This interesting project idea was originally created as a submission to Deloitte's **US GPS PolicyRecon™ NLP Hackathon**!
 * We utilized the generous support of the Deloitte **Data Science Lab** team who provided us with a Databricks compute environment to run our pipeline. Thank you!
+* Code for this project is hosted on GitHub at https://github.com/mlevitt-deloitte/Policy_Recon_HDSI/tree/main
