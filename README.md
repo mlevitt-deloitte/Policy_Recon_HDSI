@@ -5,7 +5,7 @@
 This repo explores the ability to detect contradictions in government policy documents using natural language processing (NLP). The problem statement as posed in the PolicyRecon™ hackathon which inspired this repo is as follows:
 > Given a collection of policy documents, identify contradictions (statement in one policy which are contradicted by another policy in the same group or org) within that collection
 
-To quickly see results of the full pipeline in action, you may check out [`DoD Contradictions.ipynb` [nbviewer↗]](https://nbviewer.org/github/mlevitt-deloitte/Policy_Recon_HDSI/blob/main/DoD%20Contradictions.ipynb).
+To quickly see results of the full pipeline in action, you may check out [`DoD Contradictions.ipynb (nbviewer)`](https://nbviewer.org/github/mlevitt-deloitte/Policy_Recon_HDSI/blob/main/DoD%20Contradictions.ipynb).
 
 **Table of Contents**
 - [Setup](#setup)
